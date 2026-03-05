@@ -1,0 +1,5 @@
+{
+  "name": "Remix: Ndejjean Tutor",
+  "description": "A ChatGPT-style frontend for local Ollama LLMs, featuring secure authentication and a dynamic tutor interface.",
+  "requestFramePermissions": []
+}
