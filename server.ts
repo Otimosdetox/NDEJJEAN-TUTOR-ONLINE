@@ -21,7 +21,15 @@ async function startServer() {
   // OpenRouter Proxy
   app.post("/api/chat", async (req: Request, res: Response) => {
     const { messages, stream, model } = req.body;
-    const apiKey = process.env.OPENROUTER_API_KEY || "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";
+    const apiKey = process.env.OPENROUTER_API_KEY;
+
+    if (!apiKey) {
+      console.error("OPENROUTER_API_KEY is not set in environment variables.");
+      return res.status(500).json({ 
+        error: "API Configuration Error", 
+        message: "The server is missing the required API key. Please set OPENROUTER_API_KEY in your environment variables." 
+      });
+    }
     
     try {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
