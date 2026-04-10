@@ -451,7 +451,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error?.message || 'Failed to get response');
+                const errorMessage = errorData.message || errorData.error?.message || 'Failed to get response';
+                throw new Error(errorMessage);
             }
 
             const body = response.body;

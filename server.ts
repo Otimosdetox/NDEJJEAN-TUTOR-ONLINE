@@ -20,23 +20,27 @@ async function startServer() {
 
   // OpenRouter Proxy
   app.post("/api/chat", async (req: Request, res: Response) => {
+    console.log("Received chat request");
     const { messages, stream, model } = req.body;
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
-      console.error("OPENROUTER_API_KEY is not set in environment variables.");
+      console.error("OPENROUTER_API_KEY is missing");
       return res.status(500).json({ 
         error: "API Configuration Error", 
-        message: "The server is missing the required API key. Please set OPENROUTER_API_KEY in your environment variables." 
+        message: "OPENROUTER_API_KEY is not set. Please add it to your environment variables." 
       });
     }
     
     try {
+      const referer = process.env.APP_URL || req.headers.referer || "http://localhost:3000";
+      console.log(`Using referer: ${referer}`);
+
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
-          "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
+          "HTTP-Referer": referer,
           "X-Title": "NDEJJEAN AI TUTOR",
           "Content-Type": "application/json"
         },
@@ -48,8 +52,14 @@ async function startServer() {
       });
 
       if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          return res.status(response.status).json(errorData);
+          const errorText = await response.text();
+          console.error(`OpenRouter error (${response.status}):`, errorText);
+          try {
+            const errorData = JSON.parse(errorText);
+            return res.status(response.status).json(errorData);
+          } catch (e) {
+            return res.status(response.status).json({ error: "OpenRouter Error", message: errorText });
+          }
       }
 
       if (stream) {
@@ -94,10 +104,22 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = path.resolve(process.cwd(), 'dist');
+    console.log(`Serving static files from: ${distPath}`);
+    
     app.use(express.static(distPath));
-    app.get('*', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    
+    app.get('*', (req, res) => {
+      // Don't handle API routes here
+      if (req.path.startsWith('/api/')) return;
+      
+      const indexPath = path.join(distPath, 'index.html');
+      res.sendFile(indexPath, (err) => {
+        if (err) {
+          console.error("Error sending index.html:", err);
+          res.status(404).send("Frontend build not found. Please run 'npm run build' first.");
+        }
+      });
     });
   }
 
