@@ -1,5 +1,5 @@
 {
-  "name": "Remix: Ndejjean Tutor",
-  "description": "A ChatGPT-style frontend for local Ollama LLMs, featuring secure authentication and a dynamic tutor interface.",
+  "name": "NDEJJEAN AI TUTOR V4",
+  "description": "A ChatGPT-style AI tutor powered by OpenRouter.",
   "requestFramePermissions": []
 }
