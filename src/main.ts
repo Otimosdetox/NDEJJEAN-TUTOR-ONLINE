@@ -451,7 +451,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                const errorMessage = errorData.message || errorData.error?.message || 'Failed to get response';
+                let errorMessage = errorData.message || errorData.error?.message || 'Failed to get response';
+                
+                if (response.status === 500 && errorMessage.includes("OPENROUTER_API_KEY")) {
+                    errorMessage = "The OpenRouter API Key is missing in the server environment variables. Please add OPENROUTER_API_KEY to your Vercel/Deployment settings.";
+                }
+                
                 throw new Error(errorMessage);
             }
 
@@ -499,7 +504,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Fetch aborted');
             } else {
                 console.error(err);
-                messages.push({ role: 'assistant', content: "I'm sorry, I encountered an error. Please try again later." });
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                messages.push({ 
+                    role: 'assistant', 
+                    content: `I'm sorry, I encountered an error: **${errorMessage}**. Please check your API key configuration or try again later.` 
+                });
             }
         } finally {
             isTyping = false;
